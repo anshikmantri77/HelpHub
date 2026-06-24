@@ -33,6 +33,8 @@ function toResponse(ticket: {
     priority: ticket.priority as TicketResponse['priority'],
     requesterId: ticket.requesterId,
     assigneeId: ticket.assigneeId,
+    slaDueAt: ticket.slaDueAt ? ticket.slaDueAt.toISOString() : null,
+    slaBreached: ticket.slaBreached,
     createdAt: ticket.createdAt.toISOString(),
     updatedAt: ticket.updatedAt.toISOString(),
   };
@@ -116,17 +118,35 @@ export async function transition(
     throw new ForbiddenError('Insufficient permissions');
   }
 
+  // Auto-assign case: atomic conditional update (no pre-check, single statement)
   if (
     input.status === 'in_progress' &&
     !ticket.assigneeId &&
     (user.role === 'agent' || user.role === 'admin')
   ) {
-    await repo.assign(ticketId, user.id);
+    try {
+      const claimed = await repo.claim(ticketId, user.id);
+      return toResponse(claimed);
+    } catch (err) {
+      const message = (err as Error).message;
+      if (message === 'Ticket not found') {
+        throw new NotFoundError('Ticket not found');
+      }
+      const reRead = await repo.findByIdForCaller(ticketId, user);
+      if (!reRead) throw new NotFoundError('Ticket not found');
+      throw new ConflictError('Ticket was already claimed');
+    }
   }
 
-  const updated = await repo.updateStatus(ticketId, input.status);
+  // Scoped atomic UPDATE with FROM status + visibility predicate
+  const updated = await repo.transitionStatusScoped(ticketId, input.status, status, user);
   if (!updated) {
-    throw new NotFoundError('Ticket not found');
+    const reRead = await repo.findByIdForCaller(ticketId, user);
+    if (!reRead) throw new NotFoundError('Ticket not found');
+    throw new UnprocessableEntityError('INVALID_TRANSITION', {
+      from: status,
+      to: input.status,
+    });
   }
 
   return toResponse(updated);

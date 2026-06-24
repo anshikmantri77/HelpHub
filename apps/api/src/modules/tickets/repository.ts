@@ -96,6 +96,26 @@ export async function claim(ticketId: string, agentId: string) {
   throw new Error('Ticket already assigned');
 }
 
+export async function transitionStatusScoped(
+  id: string,
+  newStatus: Status,
+  currentStatus: Status,
+  caller: { id: string; role: Role },
+) {
+  const [ticket] = await db
+    .update(tickets)
+    .set({ status: newStatus, updatedAt: new Date() })
+    .where(
+      and(
+        eq(tickets.id, id),
+        eq(tickets.status, currentStatus),
+        buildVisibilityPredicate(caller),
+      ),
+    )
+    .returning();
+  return ticket ?? null;
+}
+
 export async function updateStatus(id: string, status: Status) {
   const [ticket] = await db
     .update(tickets)

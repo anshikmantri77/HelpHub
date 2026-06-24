@@ -155,6 +155,35 @@ describe('ticket authz — create', () => {
     expect(res.body.requesterId).toBe(customer.id);
   });
 
+  it('creates tickets with every valid priority', async () => {
+    const customer = await createUser('customer');
+
+    for (const priority of ['low', 'medium', 'high', 'urgent'] as const) {
+      const res = await api()
+        .post('/tickets')
+        .set('Authorization', bearer(customer))
+        .send({ title: `Ticket ${priority}`, description: priority, priority });
+
+      expect(res.status).toBe(201);
+      expect(res.body.priority).toBe(priority);
+    }
+  });
+
+  it('returns slaDueAt and slaBreached in ticket response', async () => {
+    const customer = await createUser('customer');
+
+    const res = await api()
+      .post('/tickets')
+      .set('Authorization', bearer(customer))
+      .send({ title: 'SLA test', description: 'Check slaBreached' });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty('slaDueAt');
+    expect(typeof res.body.slaDueAt).toBe('string');
+    expect(res.body).toHaveProperty('slaBreached');
+    expect(res.body.slaBreached).toBe(false);
+  });
+
   it('returns 401 without auth', async () => {
     const res = await api()
       .post('/tickets')
@@ -300,6 +329,48 @@ describe('ticket authz — transitions', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('in_progress');
+  });
+
+  it('requester can reopen resolved ticket, then assigned agent progresses reopened → in_progress', async () => {
+    const customer = await createUser('customer');
+    const agent = await createUser('agent');
+    const ticket = await createTicket(customer.id, {
+      status: 'resolved',
+      assigneeId: agent.id,
+    });
+
+    const reopenRes = await api()
+      .post(`/tickets/${ticket.id}/transitions`)
+      .set('Authorization', bearer(customer))
+      .send({ status: 'reopened' });
+
+    expect(reopenRes.status).toBe(200);
+    expect(reopenRes.body.status).toBe('reopened');
+
+    const progressRes = await api()
+      .post(`/tickets/${ticket.id}/transitions`)
+      .set('Authorization', bearer(agent))
+      .send({ status: 'in_progress' });
+
+    expect(progressRes.status).toBe(200);
+    expect(progressRes.body.status).toBe('in_progress');
+  });
+
+  it('customer A cannot reopen customer B\'s resolved ticket (404)', async () => {
+    const customerA = await createUser('customer');
+    const customerB = await createUser('customer');
+    const agent = await createUser('agent');
+    const ticket = await createTicket(customerA.id, {
+      status: 'resolved',
+      assigneeId: agent.id,
+    });
+
+    const res = await api()
+      .post(`/tickets/${ticket.id}/transitions`)
+      .set('Authorization', bearer(customerB))
+      .send({ status: 'reopened' });
+
+    expect(res.status).toBe(404);
   });
 
   it('closed → in_progress is 422 for customer', async () => {
