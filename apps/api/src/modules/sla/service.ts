@@ -1,7 +1,7 @@
 const SLA_HOURS: Record<string, number> = {
   urgent: 2,
   high: 8,
-  normal: 24,
+  medium: 24,
   low: 72,
 };
 
