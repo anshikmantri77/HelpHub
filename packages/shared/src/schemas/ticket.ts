@@ -18,6 +18,8 @@ export const TicketResponse = z.object({
   priority: z.enum(['low', 'medium', 'high', 'urgent']),
   requesterId: z.string().uuid(),
   assigneeId: z.string().uuid().nullable(),
+  slaDueAt: z.string().nullable(),
+  slaBreached: z.boolean(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

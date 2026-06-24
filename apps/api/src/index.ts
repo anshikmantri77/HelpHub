@@ -1,6 +1,6 @@
+import { env } from './config/env';
 import app from './app';
 
-const PORT = Number(process.env.PORT) || 4000;
-app.listen(PORT, () => {
-  console.log(`HelpHub API running on port ${PORT}`);
+app.listen(env.PORT, () => {
+  console.log(`HelpHub API running on port ${env.PORT}`);
 });

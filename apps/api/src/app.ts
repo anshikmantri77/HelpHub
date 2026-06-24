@@ -1,14 +1,10 @@
-import 'dotenv/config';
+import './config/env';
 import express from 'express';
 import cors from 'cors';
 import authRoutes from './modules/auth/routes';
 import ticketRoutes from './modules/tickets/routes';
 import commentRoutes from './modules/comments/routes';
 import { errorHandler } from './middleware/errorHandler';
-
-if (!process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
-}
 
 const app = express();
 
