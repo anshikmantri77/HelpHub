@@ -125,16 +125,15 @@ export async function transition(
     (user.role === 'agent' || user.role === 'admin')
   ) {
     try {
-      const claimed = await repo.claim(ticketId, user.id);
+      const claimed = await repo.claim(ticketId, user.id, user);
       return toResponse(claimed);
     } catch (err) {
-      const message = (err as Error).message;
-      if (message === 'Ticket not found') {
-        throw new NotFoundError('Ticket not found');
+      if ((err as Error).message === 'CLAIM_FAILED') {
+        const reRead = await repo.findByIdForCaller(ticketId, user);
+        if (!reRead) throw new NotFoundError('Ticket not found');
+        throw new ConflictError('Ticket was already claimed');
       }
-      const reRead = await repo.findByIdForCaller(ticketId, user);
-      if (!reRead) throw new NotFoundError('Ticket not found');
-      throw new ConflictError('Ticket was already claimed');
+      throw err;
     }
   }
 
@@ -161,13 +160,15 @@ export async function claim(
   }
 
   try {
-    const updated = await repo.claim(ticketId, user.id);
+    const updated = await repo.claim(ticketId, user.id, user);
     return toResponse(updated);
   } catch (err) {
-    const message = (err as Error).message;
-    if (message === 'Ticket not found') {
-      throw new NotFoundError('Ticket not found');
+    if ((err as Error).message === 'CLAIM_FAILED') {
+      // Use findByIdForCaller to determine response — no info leak
+      const visible = await repo.findByIdForCaller(ticketId, user);
+      if (!visible) throw new NotFoundError('Ticket not found');
+      throw new ConflictError('Ticket already assigned');
     }
-    throw new ConflictError('Ticket already assigned');
+    throw err;
   }
 }

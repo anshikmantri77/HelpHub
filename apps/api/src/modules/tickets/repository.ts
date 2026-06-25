@@ -83,17 +83,21 @@ export async function listForCaller(
   return { data, total: Number(row!.total) };
 }
 
-export async function claim(ticketId: string, agentId: string) {
+export async function claim(ticketId: string, agentId: string, caller: { id: string; role: Role }) {
   const [updated] = await db
     .update(tickets)
     .set({ assigneeId: agentId, status: 'in_progress', updatedAt: new Date() })
-    .where(and(eq(tickets.id, ticketId), isNull(tickets.assigneeId), eq(tickets.status, 'open')))
+    .where(
+      and(
+        eq(tickets.id, ticketId),
+        isNull(tickets.assigneeId),
+        eq(tickets.status, 'open'),
+        buildVisibilityPredicate(caller),
+      ),
+    )
     .returning();
   if (updated) return updated;
-
-  const [existing] = await db.select().from(tickets).where(eq(tickets.id, ticketId));
-  if (!existing) throw new Error('Ticket not found');
-  throw new Error('Ticket already assigned');
+  throw new Error('CLAIM_FAILED');
 }
 
 export async function transitionStatusScoped(
@@ -116,20 +120,3 @@ export async function transitionStatusScoped(
   return ticket ?? null;
 }
 
-export async function updateStatus(id: string, status: Status) {
-  const [ticket] = await db
-    .update(tickets)
-    .set({ status, updatedAt: new Date() })
-    .where(eq(tickets.id, id))
-    .returning();
-  return ticket ?? null;
-}
-
-export async function assign(id: string, assigneeId: string) {
-  const [ticket] = await db
-    .update(tickets)
-    .set({ assigneeId, updatedAt: new Date() })
-    .where(eq(tickets.id, id))
-    .returning();
-  return ticket ?? null;
-}

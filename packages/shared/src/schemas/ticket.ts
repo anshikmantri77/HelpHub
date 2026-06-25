@@ -54,6 +54,11 @@ export const ListTicketsQuery = z.object({
   offset: z.coerce.number().int().min(0).optional().default(0),
 });
 
+export const CreateCommentInput = z.object({
+  content: z.string().min(1).max(5000),
+  isInternal: z.boolean().default(false),
+});
+
 export type CreateTicketInput = z.infer<typeof CreateTicketInput>;
 export type TransitionInput = z.infer<typeof TransitionInput>;
 export type TicketResponse = z.infer<typeof TicketResponse>;
@@ -61,3 +66,5 @@ export type TicketListResponse = z.infer<typeof TicketListResponse>;
 export type PaginatedMeta = z.infer<typeof PaginatedMeta>;
 export type Comment = z.infer<typeof Comment>;
 export type ListTicketsQuery = z.infer<typeof ListTicketsQuery>;
+export type CreateCommentInput = z.infer<typeof CreateCommentInput>;
+

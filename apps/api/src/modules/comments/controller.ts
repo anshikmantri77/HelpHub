@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { CreateCommentInput } from '@helphub/shared';
 import { ForbiddenError } from '../../errors/AppError';
 import * as commentService from './service';
 
@@ -9,16 +10,16 @@ export async function create(req: Request, res: Response, next: NextFunction) {
       throw new Error('Missing ticket id');
     }
 
-    const { content, isInternal } = req.body;
+    const input = CreateCommentInput.parse(req.body);
 
-    if (req.user!.role === 'customer' && isInternal) {
+    if (req.user!.role === 'customer' && input.isInternal) {
       throw new ForbiddenError('Customers cannot create internal notes');
     }
 
     const comment = await commentService.create(
       ticketId,
-      content,
-      isInternal ?? false,
+      input.content,
+      input.isInternal,
       req.user!,
     );
 

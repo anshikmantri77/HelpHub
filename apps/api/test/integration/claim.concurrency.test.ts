@@ -33,12 +33,32 @@ describe('claim concurrency', () => {
     expect(dbTicket!.assigneeId).toBeTruthy();
   });
 
-  it('returns 404 for non-existent ticket', async () => {
+  it('returns 404 for non-existent ticket (no info leak on existence)', async () => {
     const agent = await createUser('agent');
 
     const res = await api()
       .patch('/tickets/00000000-0000-0000-0000-000000000000/assign')
       .set('Authorization', bearer(agent));
+
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 404 when agent claims a ticket assigned to another agent (no info leak on assignment)', async () => {
+    const customer = await createUser('customer');
+    const claimingAgent = await createUser('agent');
+    const ownerAgent = await createUser('agent');
+
+    // Create a ticket and assign it to ownerAgent directly
+    const ticket = await createTicket(customer.id, {
+      assigneeId: ownerAgent.id,
+      status: 'in_progress',
+    });
+
+    // claimingAgent cannot see this ticket (it's assigned to someone else),
+    // so they should receive 404, not 409 — proving no info leak.
+    const res = await api()
+      .patch(`/tickets/${ticket.id}/assign`)
+      .set('Authorization', bearer(claimingAgent));
 
     expect(res.status).toBe(404);
   });

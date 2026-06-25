@@ -27,6 +27,8 @@ psql -d helphub -c "GRANT ALL ON SCHEMA public TO helphub;"
 psql -d helphub -f apps/api/src/db/migrations/0001_init.sql
 psql -d helphub -f apps/api/src/db/migrations/0002_tickets.sql
 psql -d helphub -f apps/api/src/db/migrations/0003_comments_sla.sql
+psql -d helphub -f apps/api/src/db/migrations/0004_status_transition_constraint.sql
+
 
 # Seed demo accounts
 pnpm -F @helphub/api seed
