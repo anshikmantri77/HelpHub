@@ -17,6 +17,7 @@ export function useTickets(filters: {
   order?: string;
   limit?: number;
   offset?: number;
+  assigneeId?: string;
 }) {
   const params = new URLSearchParams();
   if (filters.status) params.set('status', filters.status);
@@ -25,6 +26,7 @@ export function useTickets(filters: {
   if (filters.order) params.set('order', filters.order);
   if (filters.limit !== undefined) params.set('limit', String(filters.limit));
   if (filters.offset !== undefined) params.set('offset', String(filters.offset));
+  if (filters.assigneeId) params.set('assigneeId', filters.assigneeId);
   const qs = params.toString();
 
   return useQuery({

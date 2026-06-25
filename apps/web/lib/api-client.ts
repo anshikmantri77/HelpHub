@@ -32,7 +32,7 @@ export async function apiFetch<T>(
   if (res.status === 401) {
     useAuthStore.getState().clearAuth();
     if (typeof window !== 'undefined') {
-      window.location.href = '/login';
+      window.location.href = '/login?expired=1';
     }
     throw new ApiError(401, 'UNAUTHORIZED', 'Session expired');
   }

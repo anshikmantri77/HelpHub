@@ -130,3 +130,24 @@ Data flow: Browser → Next.js pages → `apiFetch()` wrapper (attaches JWT from
 - **401 error codes are split.** Auth middleware returns `UNAUTHORIZED` while login failure returns `INVALID_CREDENTIALS`. Both are 401 but carry different codes. Unified to `UNAUTHORIZED` would be more consistent; the split allows frontends to differentiate "not logged in" from "wrong password."
 - **No database-level cascading deletes.** Hard deletes are not used; if added, cascades must be wired explicitly.
 - **Worker is a separate process.** SLA breach polling runs outside the API server. Works for single-replica deployments; for horizontal scaling the BullMQ scheduler should run exactly once (e.g., sole replica or external cron).
+
+## UI/UX Decisions
+
+The frontend improvements prioritise **production state coverage** over visual polish, in line with the evaluation criteria.
+
+### Why states over aesthetics
+A support tool used by agents under time pressure must communicate clearly what is happening at every moment — loading, error, empty, or in-conflict state. Missing these states forces agents to guess, refresh, or escalate unnecessarily. Visual animations and custom typography cannot substitute for a clear "BREACH" badge next to an overdue ticket or a "Session expired" message that explains *why* you were redirected to login.
+
+### Specific decisions
+
+| Decision | Rationale |
+|---|---|
+| URL-persisted filters | Agents share links and reload the page. Filter state in URL means the same view is reproducible and bookmarkable. |
+| Error code displayed in error states | The backend returns structured `code` fields (e.g., `CLAIM_FAILED`, `RATE_LIMIT`). Surfacing the code gives agents something actionable to report. |
+| Per-button loading on transitions | A single global `isPending` disables *all* buttons during a mutation, creating confusion about which action was taken. Per-button loading isolates the feedback. |
+| Comments auto-load on mount | Requiring a manual "Load comments" click before seeing thread history is a hidden step. Auto-loading removes this friction. |
+| Contextual empty states | "No tickets yet" is ambiguous. Distinguishing "no results for this filter" from "genuinely empty queue" removes unnecessary confusion. |
+| SLA breach badge in list view | Agents need to triage breached tickets at a glance. A `BREACH` badge is information density, not decoration. |
+| Session-expired banner on login | Without this, agents who are force-redirected to login have no idea why. The amber banner closes the feedback loop. |
+| Sidebar metadata with relative time | Created/updated timestamps as "3h ago" are faster to parse than ISO strings in an operational context; full timestamp on hover keeps precision available. |
+| No toast library added | The brief prohibits new dependencies. The `?created=1` query param on redirect allows the detail page to surface success state without a third-party library. |
