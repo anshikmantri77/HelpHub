@@ -4,6 +4,7 @@ import cors from 'cors';
 import authRoutes from './modules/auth/routes';
 import ticketRoutes from './modules/tickets/routes';
 import commentRoutes from './modules/comments/routes';
+import userRoutes from './modules/users/routes';
 import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
@@ -13,6 +14,7 @@ app.use(express.json());
 app.use('/auth', authRoutes);
 app.use('/tickets', ticketRoutes);
 app.use('/tickets', commentRoutes);
+app.use('/users', userRoutes);
 app.use(errorHandler);
 
 export default app;

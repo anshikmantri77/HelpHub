@@ -40,17 +40,30 @@ function toResponse(ticket: {
   };
 }
 
+import * as userRepo from '../users/repository';
+import { UnprocessableEntityError } from '../../errors/AppError';
+
 export async function create(
   input: CreateTicketInput,
   user: { id: string; role: Role },
 ) {
   const now = new Date();
+  
+  if (input.assigneeId) {
+    const assignee = await userRepo.findById(input.assigneeId);
+    if (!assignee || !['agent', 'admin'].includes(assignee.role)) {
+      throw new UnprocessableEntityError('Invalid assignee');
+    }
+  }
+
   const slaDueAt = computeSlaDueAt(input.priority, now);
   const ticket = await repo.create({
     title: input.title,
     description: input.description,
     priority: input.priority,
     requesterId: user.id,
+    assigneeId: input.assigneeId ?? null,
+    status: input.assigneeId ? 'in_progress' : 'open',
     createdAt: now,
     slaDueAt,
   });

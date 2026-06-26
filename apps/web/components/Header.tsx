@@ -37,14 +37,6 @@ export function Header() {
             >
               Tickets
             </Link>
-            {user && (
-              <Link
-                href="/tickets/new"
-                className="text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-              >
-                New Ticket
-              </Link>
-            )}
           </nav>
         </div>
 

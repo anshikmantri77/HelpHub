@@ -4,6 +4,7 @@ export const CreateTicketInput = z.object({
   title: z.string().min(1).max(255),
   description: z.string().min(1),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).optional().default('medium'),
+  assigneeId: z.string().uuid().optional(),
 });
 
 export const TransitionInput = z.object({

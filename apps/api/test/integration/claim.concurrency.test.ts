@@ -5,7 +5,7 @@ import { tickets } from '../../src/db/schema';
 import { eq } from 'drizzle-orm';
 
 describe('claim concurrency', () => {
-  it('exactly one of 20 simultaneous claims wins, rest 409', async () => {
+  it('exactly one of 20 simultaneous claims wins, rest get 404 (no info leak)', async () => {
     const customer = await createUser('customer');
     const agents = await Promise.all(
       Array.from({ length: 20 }, () => createUser('agent')),
@@ -21,8 +21,12 @@ describe('claim concurrency', () => {
     );
 
     const statuses = results.map((r) => r.status);
+    // Exactly one agent wins the atomic UPDATE
     expect(statuses.filter((s) => s === 200)).toHaveLength(1);
-    expect(statuses.filter((s) => s === 409)).toHaveLength(19);
+    // The other 19 agents: the ticket is now assigned to someone else, so
+    // findByIdForCaller returns null for them → 404 (not 409 — this proves
+    // no info leak about the ticket's existence or assignment state)
+    expect(statuses.filter((s) => s === 404)).toHaveLength(19);
     expect(statuses.filter((s) => s >= 500)).toHaveLength(0);
 
     const [dbTicket] = await db

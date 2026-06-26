@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { CreateTicketInput } from '@helphub/shared';
 import { useCreateTicket } from '../../../lib/queries/tickets';
 import { ApiError } from '../../../lib/api-client';
+import { AssigneePicker } from '../../../components/AssigneePicker';
+import type { Agent } from '../../../lib/queries/users';
 
 export default function NewTicketPage() {
   const router = useRouter();
@@ -12,6 +14,7 @@ export default function NewTicketPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
+  const [assignee, setAssignee] = useState<Agent | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [isRateLimited, setIsRateLimited] = useState(false);
@@ -22,7 +25,7 @@ export default function NewTicketPage() {
     setServerError(null);
     setIsRateLimited(false);
 
-    const parsed = CreateTicketInput.safeParse({ title, description, priority });
+    const parsed = CreateTicketInput.safeParse({ title, description, priority, assigneeId: assignee?.id });
     if (!parsed.success) {
       const fields: Record<string, string> = {};
       for (const issue of parsed.error.issues) {
@@ -121,6 +124,18 @@ export default function NewTicketPage() {
             <option value="high">High</option>
             <option value="urgent">Urgent</option>
           </select>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">
+            Assignee (optional)
+          </label>
+          <AssigneePicker value={assignee} onChange={setAssignee} />
+          {fieldErrors.assigneeId && (
+            <p className="mt-1 text-sm text-red-600" role="alert">
+              {fieldErrors.assigneeId}
+            </p>
+          )}
         </div>
 
         {serverError && (

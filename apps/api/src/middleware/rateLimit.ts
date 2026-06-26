@@ -15,7 +15,7 @@ if current == false then
   return {1, window}
 end
 local count = tonumber(current)
-if count >= limit then
+if count > limit then
   local ttl = redis.call('TTL', key)
   return {count, ttl}
 end

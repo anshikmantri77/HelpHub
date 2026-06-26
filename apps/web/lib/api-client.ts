@@ -29,7 +29,7 @@ export async function apiFetch<T>(
 
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
 
-  if (res.status === 401) {
+  if (res.status === 401 && !path.includes('/auth/login')) {
     useAuthStore.getState().clearAuth();
     if (typeof window !== 'undefined') {
       window.location.href = '/login?expired=1';

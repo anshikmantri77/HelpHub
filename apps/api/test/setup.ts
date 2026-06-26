@@ -6,6 +6,7 @@ import request from 'supertest';
 import app from '../src/app';
 import { db } from '../src/db';
 import { users, tickets, comments } from '../src/db/schema';
+import { redis } from '../src/redis';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
@@ -13,13 +14,17 @@ let server: ReturnType<typeof createServer>;
 
 beforeAll(async () => {
   server = createServer(app);
+  // Clear DB tables
   await db.delete(comments);
   await db.delete(tickets);
   await db.delete(users);
+  // Clear Redis (rate-limit counters) so previous runs don't contaminate
+  await redis.flushall();
 });
 
-afterAll(() => {
+afterAll(async () => {
   server?.close();
+  await redis.quit();
 });
 
 export function getServer() {
