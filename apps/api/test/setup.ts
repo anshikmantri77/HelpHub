@@ -9,6 +9,7 @@ import { users, tickets, comments } from '../src/db/schema';
 import { redis } from '../src/redis';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { afterAll, beforeAll } from 'vitest';
 
 let server: ReturnType<typeof createServer>;
 

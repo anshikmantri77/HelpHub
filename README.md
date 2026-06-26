@@ -151,3 +151,4 @@ A support tool used by agents under time pressure must communicate clearly what 
 | Session-expired banner on login | Without this, agents who are force-redirected to login have no idea why. The amber banner closes the feedback loop. |
 | Sidebar metadata with relative time | Created/updated timestamps as "3h ago" are faster to parse than ISO strings in an operational context; full timestamp on hover keeps precision available. |
 | No toast library added | The brief prohibits new dependencies. The `?created=1` query param on redirect allows the detail page to surface success state without a third-party library. |
+| Assignee Picker on ticket creation | Allows users to optionally assign a ticket to a specific agent at creation time. Uses a debounced search input to query agents by name, providing a scalable and user-friendly experience compared to a standard dropdown. |
